@@ -1,0 +1,88 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - asciicheck
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
+    - goheader
+    - gomodguard
+    - goprintffuncname
+    - ineffassign
+    - misspell
+    - nakedret
+    - nolintlint
+    - sloglint
+    - staticcheck
+    - unparam
+    - unused
+    - whitespace
+    - wsl_v5
+    - govet
+    - gosec
+  settings:
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
+    gosec:
+      includes:
+        - G404
+    sloglint:
+      kv-only: true
+      context: scope
+      static-msg: true
+      key-naming-case: snake
+      forbidden-keys:
+        - request
+        - time
+        - level
+        - msg
+        - source
+      msg-style: capitalized
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: true
+      branch-max-lines: 2
+      case-max-lines: 0
+      default: none
+      enable:
+        - expr
+        - go
+        - inc-dec
+        - label
+        - send
+        - switch
+        - leading-whitespace
+        - trailing-whitespace
+    staticcheck:
+      checks:
+        - all
+        - "-ST1003" # exclude `Id` casing
+        - "-ST1019" # exclude double imports
+        - "-ST1016" # exclude method receiver names
+        - "-S1039" # exclude unnecessary fmt.Sprintf
+        - "-SA1019" # exclude strings.Title being deprecated
+        - "-QF1008" # exclude embedded field access
+        - "-ST1005" # exclude error strings not capital
+        - "-ST1000" # exclude comment stuff
+        - "-ST1020" # exclude comment stuff
+        - "-ST1021" # exclude comment stuff
+        - "-ST1022" # exclude comment stuff
+  exclusions:
+    rules:
+      - text: only one cuddle assignment allowed before if statement
+        linters: ["wsl"]
+      - text: if statements should only be cuddled with assignments
+        linters: ["wsl"]
+      - text: ranges should only be cuddled with assignments used in the iteration
+        linters: ["wsl"]
+      - text: go statements can only invoke
+        linters: ["wsl"]
+      - text: should not be cuddled if block has more than two lines
+        linters: ["wsl"]
+formatters:
+  enable:
+    - goimports
