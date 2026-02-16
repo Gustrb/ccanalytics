@@ -5,10 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
-	"log/slog"
 	"os"
 	"sync"
-	"time"
 )
 
 // Note: crazy early optimization, maybe it is a silly one. But I wanted to use sync.Pools. Remove if it doesn't make a difference.
@@ -55,13 +53,6 @@ func CheckIfFileIsSigned(ctx context.Context, filePath string) (*SignedBinary, e
 	signedBinary, err := GetSignedBinaryByHash(ctx, hash)
 	if err != nil {
 		return nil, err
-	}
-
-	if signedBinary == nil {
-		slog.InfoContext(ctx, "No signed binary found with the given hash")
-	} else {
-		signedAt := time.Unix(signedBinary.CreatedAt, 0).Format(time.RFC3339)
-		slog.InfoContext(ctx, "The binary was signed", "signed_at", signedAt)
 	}
 
 	return signedBinary, nil
