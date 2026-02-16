@@ -8,7 +8,7 @@ import (
 
 const (
 	getLatestAppliedMigrationsQuery = "select * from migrations order by timestamp;"
-	getLastAppliedMigrationQuery    = "select * from migrations order by timestamp limit 1;"
+	getLastAppliedMigrationQuery    = "select * from migrations order by timestamp desc limit 1;"
 )
 
 func GetLatestAppliedMigrations(ctx context.Context) ([]*Migration, error) {
@@ -26,7 +26,7 @@ func GetLatestAppliedMigrations(ctx context.Context) ([]*Migration, error) {
 }
 
 func GetLastMigration(ctx context.Context) (*Migration, error) {
-	migration, err := database.SelectContext[Migration](ctx, getLastAppliedMigrationQuery)
+	migrations, err := database.SelectContext[Migration](ctx, getLastAppliedMigrationQuery)
 
 	// If the err is no table found, we can ignore it and return an empty slice of migrations
 	if database.IsNoTableFoundError(err) {
@@ -36,9 +36,9 @@ func GetLastMigration(ctx context.Context) (*Migration, error) {
 		return nil, err
 	}
 
-	if len(migration) == 0 {
+	if len(migrations) == 0 {
 		return nil, nil
 	}
 
-	return migration[0], nil
+	return migrations[0], nil
 }

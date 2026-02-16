@@ -28,9 +28,12 @@ func SignFileAt(ctx context.Context, filePath string) error {
 		return err
 	}
 
-	_ = hash
-
-	// TODO: store the hash in a sqlite db.
+	signedBinary := NewSignedBinary(
+		WithHash(hash),
+	)
+	if _, err := Create(ctx, signedBinary); err != nil {
+		return err
+	}
 
 	return nil
 }

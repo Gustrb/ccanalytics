@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -45,6 +46,11 @@ func main() {
 
 			default:
 				if err := binsign.SignFileAt(ctx, c.String("file_path")); err != nil {
+					if errors.Is(err, binsign.ErrDuplicateHash) {
+						slog.WarnContext(ctx, "File has already been signed, skipping", "file_path", c.String("file_path"))
+						return nil
+					}
+
 					slog.ErrorContext(ctx, "Failed to sign file", "error", err)
 					return err
 				}
