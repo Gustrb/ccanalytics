@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -83,8 +84,8 @@ func getScanDest(obj any, columns []string) ([]any, error) {
 	return dest, nil
 }
 
-func SelectContext[T any](ctx context.Context, query string) ([]*T, error) {
-	rows, err := db.QueryContext(ctx, query)
+func SelectContext[T any](ctx context.Context, query string, args ...any) ([]*T, error) {
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +93,10 @@ func SelectContext[T any](ctx context.Context, query string) ([]*T, error) {
 
 	columns, err := rows.Columns()
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 

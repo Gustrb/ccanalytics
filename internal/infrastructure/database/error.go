@@ -13,3 +13,15 @@ func IsNoTableFoundError(err error) bool {
 
 	return false
 }
+
+func IsDuplicateEntryError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+		return true
+	}
+
+	return false
+}
