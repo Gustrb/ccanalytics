@@ -46,7 +46,7 @@ func MigrateUp(ctx context.Context) error {
 	}
 
 	if len(latestMigrations) == len(changes) {
-		slog.InfoContext(ctx, "all migrations have already been applied")
+		slog.InfoContext(ctx, "All migrations have already been applied")
 		return nil
 	}
 
@@ -55,7 +55,7 @@ func MigrateUp(ctx context.Context) error {
 	}
 
 	if len(latestMigrations) == 0 {
-		slog.InfoContext(ctx, "no migrations have been applied yet, applying all migrations")
+		slog.InfoContext(ctx, "No migrations have been applied yet, applying all migrations")
 		if err := applyMigrations(ctx, changes); err != nil {
 			return fmt.Errorf("applying migrations: %w", err)
 		}
@@ -124,7 +124,7 @@ func applyMigrations(ctx context.Context, migrationList []*Migration) error {
 		return err
 	}
 
-	slog.InfoContext(ctx, "successfully applied all migrations")
+	slog.InfoContext(ctx, "Successfully applied all migrations")
 
 	return nil
 }
