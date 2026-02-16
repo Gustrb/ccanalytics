@@ -23,7 +23,6 @@ func GetSignedBinaryByHash(ctx context.Context, hash string) (*SignedBinary, err
 	}
 
 	if len(signedBinaries) == 0 {
-		slog.InfoContext(ctx, "No signed binary found with the given hash", "hash", hash)
 		return nil, nil
 	}
 

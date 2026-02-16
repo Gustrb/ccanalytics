@@ -83,7 +83,7 @@ func MigrateUp(ctx context.Context) error {
 	}
 
 	if lastCommonIndex == len(changes)-1 {
-		slog.InfoContext(ctx, "all migrations have already been applied")
+		slog.InfoContext(ctx, "All migrations have already been applied")
 	}
 
 	if err := applyMigrations(ctx, changes[lastCommonIndex+1:]); err != nil {
