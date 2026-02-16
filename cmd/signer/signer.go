@@ -10,6 +10,7 @@ import (
 
 	"github.com/Gustrb/ccanalytics/internal/binsign"
 	"github.com/Gustrb/ccanalytics/internal/cmdutils"
+	"github.com/Gustrb/ccanalytics/internal/infrastructure/database/migrator"
 	"github.com/urfave/cli/v3"
 )
 
@@ -66,6 +67,17 @@ func main() {
 			slog.ErrorContext(ctx, "Failed to clean up resources", "error", err)
 		}
 	}()
+
+	areWeAtTheLatestMigration, err := migrator.AreWeAtTheLatestMigration(ctx)
+	if err != nil {
+		slog.ErrorContext(ctx, "Failed to check for latest migration", "error", err)
+		return
+	}
+
+	if !areWeAtTheLatestMigration {
+		slog.WarnContext(ctx, "Database is not at the latest migration. Please run the migrator command to apply all pending migrations before running the signer command.")
+		return
+	}
 
 	if err := cmd.Run(ctx, os.Args); err != nil {
 		slog.ErrorContext(ctx, "Failed to run signer command", "error", err)
