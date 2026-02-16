@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -21,17 +20,17 @@ func main() {
 			&cli.StringFlag{
 				Name:     "file_path",
 				Required: true,
-				Usage:    "a valid file path is required in order to be signed",
+				Usage:    "a valid file path is required in order to be checked",
 			},
 			&cli.Uint16Flag{
 				Name:  "timeout",
-				Usage: "the duration in seconds to wait before timing out the signing process",
+				Usage: "the duration in seconds to wait before timing out the checksigning process",
 				Value: 1, // default timeout of 1 second
 			},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			timeout := c.Uint16("timeout")
-			slog.InfoContext(ctx, "Starting signer command")
+			slog.InfoContext(ctx, "Starting checksign command")
 
 			ctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
 			defer cancel()
@@ -39,23 +38,24 @@ func main() {
 			select {
 			case <-ctx.Done():
 				if ctx.Err() == context.DeadlineExceeded {
-					slog.WarnContext(ctx, "Signing process timed out")
+					slog.WarnContext(ctx, "Checksigning process timed out")
 				} else {
-					slog.InfoContext(ctx, "Signing process completed successfully")
+					slog.InfoContext(ctx, "Checksigning process completed successfully")
 				}
 
 			default:
-				if err := binsign.SignFileAt(ctx, c.String("file_path")); err != nil {
-					if errors.Is(err, binsign.ErrDuplicateHash) {
-						slog.WarnContext(ctx, "File has already been signed, skipping", "file_path", c.String("file_path"))
-						return nil
-					}
-
-					slog.ErrorContext(ctx, "Failed to sign file", "error", err)
+				signedBinary, err := binsign.CheckIfFileIsSigned(ctx, c.String("file_path"))
+				if err != nil {
+					slog.ErrorContext(ctx, "Failed to check if file is signed", "error", err)
 					return err
 				}
 
-				slog.InfoContext(ctx, "File signed successfully", "file_path", c.String("file_path"))
+				if signedBinary == nil {
+					slog.InfoContext(ctx, "File is not signed", "file_path", c.String("file_path"))
+				} else {
+					signedAt := time.Unix(0, signedBinary.CreatedAt).Format(time.RFC3339)
+					slog.InfoContext(ctx, "File is signed", "file_path", c.String("file_path"), "signed_at", signedAt)
+				}
 			}
 
 			return nil
@@ -67,7 +67,7 @@ func main() {
 
 	cleanup, err := cmdutils.SetupBinary(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "Failed to set up signer command", "error", err)
+		slog.ErrorContext(ctx, "Failed to set up checksign command", "error", err)
 		return
 	}
 	defer func() {
@@ -83,11 +83,11 @@ func main() {
 	}
 
 	if !areWeAtTheLatestMigration {
-		slog.WarnContext(ctx, "Database is not at the latest migration. Please run the migrator command to apply all pending migrations before running the signer command.")
+		slog.WarnContext(ctx, "Database is not at the latest migration. Please run the migrator command to apply all pending migrations before running the checksign command.")
 		return
 	}
 
 	if err := cmd.Run(ctx, os.Args); err != nil {
-		slog.ErrorContext(ctx, "Failed to run signer command", "error", err)
+		slog.ErrorContext(ctx, "Failed to run checksign command", "error", err)
 	}
 }
