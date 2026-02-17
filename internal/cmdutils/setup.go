@@ -3,6 +3,7 @@ package cmdutils
 import (
 	"context"
 
+	_ "github.com/Gustrb/ccanalytics/internal/config"
 	"github.com/Gustrb/ccanalytics/internal/infrastructure/common"
 	"github.com/Gustrb/ccanalytics/internal/infrastructure/database"
 )

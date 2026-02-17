@@ -172,6 +172,10 @@ func InsertContext[T HasID](ctx context.Context, query string, obj T) error {
 	return nil
 }
 
+func PingContext(ctx context.Context) error {
+	return db.PingContext(ctx)
+}
+
 func ExecContext(ctx context.Context, query string) (sql.Result, error) {
 	return db.ExecContext(ctx, query)
 }

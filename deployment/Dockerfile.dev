@@ -1,0 +1,16 @@
+FROM alpine:edge
+RUN apk add -U --no-cache go git bash curl ca-certificates
+
+ENV GOPATH=/go
+ENV GOTOOLCHAIN=auto
+RUN go install github.com/go-delve/delve/cmd/dlv@latest && \
+    go install github.com/cespare/reflex@v0.3.1 && \
+    cp /go/bin/reflex /usr/local/bin/reflex && \
+    cp /go/bin/dlv /usr/local/bin/dlv
+WORKDIR /go/src/app
+COPY scripts/docker-entrypoint.sh /
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+STOPSIGNAL SIGTERM
+ENTRYPOINT ["/docker-entrypoint.sh"]
