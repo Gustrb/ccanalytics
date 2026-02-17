@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Binary Sign Client</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        input[type="file"]:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .signature-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .signature-details h3 {
+            color: #1976D2;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .signature-details p {
+            color: #333;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .signature-details strong {
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Check Binary Sign</h1>
+        <p class="subtitle">Upload a file to check if it's signed</p>
+
+        <form 
+            id="checkSignForm"
+            hx-post="http://localhost:9000/binsign/checksign"
+            hx-encoding="multipart/form-data"
+            hx-target="#status"
+            hx-swap="innerHTML"
+            hx-indicator="#loading"
+            hx-on::before-request="handleBeforeRequest()"
+            hx-on::after-request="handleAfterRequest(event)"
+        >
+            <div class="form-group">
+                <label for="file">Select File</label>
+                <input 
+                    type="file" 
+                    id="file" 
+                    name="file" 
+                    required
+                    onchange="showFileInfo(this)"
+                >
+                <div id="fileInfo" class="file-info" style="display: none;"></div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                Check Signature
+            </button>
+        </form>
+
+        <div id="status" class="status"></div>
+        <div id="loading" class="status loading" style="display: none;">
+            Checking signature...
+        </div>
+    </div>
+
+    <script>
+        function showFileInfo(input) {
+            const fileInfo = document.getElementById('fileInfo');
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                fileInfo.innerHTML = `
+                    <strong>Selected:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${formatFileSize(file.size)}<br>
+                    <strong>Type:</strong> ${file.type || 'Unknown'}
+                `;
+                fileInfo.style.display = 'block';
+            } else {
+                fileInfo.style.display = 'none';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    timeZoneName: 'short'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function handleBeforeRequest() {
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const status = document.getElementById('status');
+            
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            status.className = 'status';
+            status.style.display = 'none';
+        }
+
+        function handleAfterRequest(event) {
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const status = document.getElementById('status');
+            
+            submitBtn.disabled = false;
+            loading.style.display = 'none';
+
+            if (event.detail.successful) {
+                try {
+                    const response = JSON.parse(event.detail.xhr.responseText);
+                    status.className = 'status success';
+                    status.innerHTML = `
+                        <div class="signature-details">
+                            <h3>✓ File is Signed</h3>
+                            <p><strong>File Name:</strong> ${response.file_name || 'Unknown'}</p>
+                            <p><strong>Signed At:</strong> ${formatDate(response.signed_at)}</p>
+                        </div>
+                    `;
+                    status.style.display = 'block';
+                } catch (e) {
+                    status.className = 'status success';
+                    status.innerHTML = '✓ File is signed!';
+                    status.style.display = 'block';
+                }
+            } else {
+                const xhr = event.detail.xhr;
+                if (xhr.status === 404) {
+                    status.className = 'status warning';
+                    status.innerHTML = '⚠ File is not signed';
+                    status.style.display = 'block';
+                } else {
+                    status.className = 'status error';
+                    const errorMsg = xhr.responseText || xhr.statusText || 'Failed to check signature';
+                    status.innerHTML = '✗ Error: ' + errorMsg;
+                    status.style.display = 'block';
+                }
+            }
+        }
+
+        // Handle HTMX response errors
+        document.body.addEventListener('htmx:responseError', function(event) {
+            const status = document.getElementById('status');
+            const xhr = event.detail.xhr;
+            
+            if (xhr.status === 404) {
+                status.className = 'status warning';
+                status.innerHTML = '⚠ File is not signed';
+            } else {
+                status.className = 'status error';
+                const errorMsg = xhr.responseText || xhr.statusText || 'Failed to check signature';
+                status.innerHTML = '✗ Error: ' + errorMsg;
+            }
+            status.style.display = 'block';
+        });
+    </script>
+</body>
+</html>

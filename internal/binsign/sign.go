@@ -49,7 +49,11 @@ func CheckIfFileIsSigned(ctx context.Context, filePath string) (*SignedBinary, e
 	}
 	defer f.Close()
 
-	hash, err := digest(f)
+	return CheckIfReaderIsSigned(ctx, f)
+}
+
+func CheckIfReaderIsSigned(ctx context.Context, reader io.Reader) (*SignedBinary, error) {
+	hash, err := digest(reader)
 	if err != nil {
 		return nil, err
 	}
