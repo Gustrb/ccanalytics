@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v5"
@@ -17,9 +18,14 @@ func WithLogging(next echo.HandlerFunc) echo.HandlerFunc {
 
 		err := next(c)
 		if err != nil {
-			c.Response().WriteHeader(500)
+			if err, ok := errors.AsType[*echo.HTTPError](err); ok {
+				c.Response().WriteHeader(err.Code)
+			} else {
+				c.Response().WriteHeader(http.StatusInternalServerError)
+				slog.ErrorContext(ctx, "Handler returned an error", "error", err)
+				return nil
+			}
 		}
-
 		if errors.Is(err, context.Canceled) {
 			return nil
 		}

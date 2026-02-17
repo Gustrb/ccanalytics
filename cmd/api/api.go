@@ -57,6 +57,7 @@ func main() {
 	e.Use(middleware.RecoverWithConfig(recoverConfig))
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Gzip())
+	e.Use(middleware.CORS("*"))
 	e.Use(rest.WithTransaction)
 	e.Use(rest.WithRequestID)
 	e.Use(rest.WithLocation)

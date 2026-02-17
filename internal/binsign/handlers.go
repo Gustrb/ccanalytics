@@ -6,4 +6,5 @@ import (
 
 func Urls(e *echo.Echo) {
 	e.POST("/binsign/sign", SignHandler)
+	e.POST("/binsign/checksign", CheckSignHandler)
 }
