@@ -23,7 +23,11 @@ func SignFileAt(ctx context.Context, filePath string) error {
 	}
 	defer f.Close()
 
-	hash, err := digest(f)
+	return SignFile(ctx, f)
+}
+
+func SignFile(ctx context.Context, reader io.Reader) error {
+	hash, err := digest(reader)
 	if err != nil {
 		return err
 	}
